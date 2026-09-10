@@ -76,7 +76,7 @@ public static class SlotGenerator
                 {
                     DoctorId = doctor.Id,
                     Doctor = doctor,
-                    PoliclinicRoomId = doctor.PoliclinicRoomId,
+                    PoliclinicRoomId = schedule.PoliclinicRoomId,
                     SlotDate = date,
                     StartTime = cursor,
                     EndTime = end,

@@ -5,7 +5,7 @@ namespace HospitalSystem.Domain.Entities;
 
 public class Doctor : BaseEntity
 {
-    public int PoliclinicRoomId { get; set; }
+    public int PoliclinicId { get; set; }
 
     public int HospitalId { get; set; }
 
@@ -25,7 +25,7 @@ public class Doctor : BaseEntity
 
     public bool IsActive { get; set; } = true;
 
-    public PoliclinicRoom PoliclinicRoom { get; set; } = null!;
+    public Policlinic Policlinic { get; set; } = null!;
 
     public Hospital Hospital { get; set; } = null!;
 

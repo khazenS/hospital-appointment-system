@@ -92,7 +92,6 @@ public class DemoDataSeeder
 
             this._dbContext.Policlinics.Add(policlinic);
 
-            // Two rooms per policlinic, and one doctor per room because Doctor.PoliclinicRoomId is unique.
             for (var roomNumber = 1; roomNumber <= 2; roomNumber++)
             {
                 var room = new PoliclinicRoom
@@ -103,16 +102,21 @@ public class DemoDataSeeder
                 };
 
                 this._dbContext.PoliclinicRooms.Add(room);
+            }
 
+            // Doctors belong to the policlinic, not to a room. Which room they sit in
+            // is decided per shift in SeedSchedulesAsync.
+            for (var doctorNumber = 1; doctorNumber <= 2; doctorNumber++)
+            {
                 var (doctorName, title) = doctorNames[nameIndex];
                 var doctor = new Doctor
                 {
-                    PoliclinicRoom = room,
+                    Policlinic = policlinic,
                     Hospital = hospital,
                     SpecialtyId = specialtyId,
                     Name = doctorName,
                     Age = 34 + this._random.Next(0, 25),
-                    PhoneNumber = $"+90 532 000 {nameIndex:00} {roomNumber:00}",
+                    PhoneNumber = $"+90 532 000 {nameIndex:00} {doctorNumber:00}",
                     Email = $"doktor{nameIndex + 1}@hastane.example",
                     Title = title,
                     HireDate = new DateOnly(2010 + this._random.Next(0, 14), 1 + this._random.Next(0, 12), 1),
@@ -136,15 +140,42 @@ public class DemoDataSeeder
             WeekDay.Monday, WeekDay.Tuesday, WeekDay.Wednesday, WeekDay.Thursday, WeekDay.Friday
         };
 
+        // Two shifts a day, leaving the lunch hour uncovered.
+        var shifts = new List<(TimeOnly StartTime, TimeOnly EndTime)>
+        {
+            (new TimeOnly(9, 0), new TimeOnly(12, 0)),
+            (new TimeOnly(13, 0), new TimeOnly(17, 0))
+        };
+
+        var rooms = await this._dbContext.PoliclinicRooms
+            .OrderBy(room => room.Id)
+            .ToListAsync(cancellationToken);
+
+        var roomsByPoliclinic = rooms
+            .GroupBy(room => room.PoliclinicId)
+            .ToDictionary(group => group.Key, group => group.ToList());
+
+        var doctorCountByPoliclinic = new Dictionary<int, int>();
+
         foreach (var doctor in doctors)
         {
+            var policlinicRooms = roomsByPoliclinic[doctor.PoliclinicId];
+
+            doctorCountByPoliclinic.TryGetValue(doctor.PoliclinicId, out var doctorIndex);
+            doctorCountByPoliclinic[doctor.PoliclinicId] = doctorIndex + 1;
+
             foreach (var day in weekdays)
             {
-                // Two shifts a day, leaving the lunch hour uncovered.
-                this._dbContext.DoctorSchedules.Add(
-                    CreateSchedule(doctor, day, new TimeOnly(9, 0), new TimeOnly(12, 0)));
-                this._dbContext.DoctorSchedules.Add(
-                    CreateSchedule(doctor, day, new TimeOnly(13, 0), new TimeOnly(17, 0)));
+                for (var shiftIndex = 0; shiftIndex < shifts.Count; shiftIndex++)
+                {
+                    // Shifting the room by the doctor's position keeps two doctors of the
+                    // same policlinic out of the same room in the same shift.
+                    var room = policlinicRooms[(doctorIndex + shiftIndex) % policlinicRooms.Count];
+                    var (startTime, endTime) = shifts[shiftIndex];
+
+                    this._dbContext.DoctorSchedules.Add(
+                        CreateSchedule(doctor, room, day, startTime, endTime));
+                }
             }
         }
 
@@ -153,6 +184,7 @@ public class DemoDataSeeder
 
     private static DoctorSchedule CreateSchedule(
         Doctor doctor,
+        PoliclinicRoom room,
         WeekDay day,
         TimeOnly startTime,
         TimeOnly endTime)
@@ -160,6 +192,7 @@ public class DemoDataSeeder
         return new DoctorSchedule
         {
             Doctor = doctor,
+            PoliclinicRoom = room,
             DayName = day,
             StartTime = startTime,
             EndTime = endTime,
@@ -172,12 +205,12 @@ public class DemoDataSeeder
         List<Doctor> doctors,
         CancellationToken cancellationToken)
     {
-        // A doctor's slot length comes from the policlinic behind their room.
+        // A doctor's slot length comes from their policlinic.
         var periods = await this._dbContext.Doctors
             .Select(doctor => new
             {
                 doctor.Id,
-                Period = doctor.PoliclinicRoom.Policlinic.AppointmentTimePeriod
+                Period = doctor.Policlinic.AppointmentTimePeriod
             })
             .ToDictionaryAsync(entry => entry.Id, entry => entry.Period, cancellationToken);
 

@@ -17,9 +17,9 @@ public class DoctorConfiguration : IEntityTypeConfiguration<Doctor>
         builder.Property(doctor => doctor.Email).HasMaxLength(200);
         builder.Property(doctor => doctor.IsActive).HasDefaultValue(true);
 
-        builder.HasOne(doctor => doctor.PoliclinicRoom)
-            .WithOne(room => room.Doctor)
-            .HasForeignKey<Doctor>(doctor => doctor.PoliclinicRoomId)
+        builder.HasOne(doctor => doctor.Policlinic)
+            .WithMany(policlinic => policlinic.Doctors)
+            .HasForeignKey(doctor => doctor.PoliclinicId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(doctor => doctor.Hospital)
@@ -34,5 +34,6 @@ public class DoctorConfiguration : IEntityTypeConfiguration<Doctor>
 
         builder.HasIndex(doctor => doctor.SpecialtyId).HasDatabaseName("IX_Doctor_SpecialtyId");
         builder.HasIndex(doctor => doctor.HospitalId).HasDatabaseName("IX_Doctor_HospitalId");
+        builder.HasIndex(doctor => doctor.PoliclinicId).HasDatabaseName("IX_Doctor_PoliclinicId");
     }
 }

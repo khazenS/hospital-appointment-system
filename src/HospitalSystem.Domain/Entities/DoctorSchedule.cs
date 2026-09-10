@@ -7,6 +7,8 @@ public class DoctorSchedule : BaseEntity
 {
     public int DoctorId { get; set; }
 
+    public int PoliclinicRoomId { get; set; }
+
     public WeekDay DayName { get; set; }
 
     public TimeOnly StartTime { get; set; }
@@ -20,4 +22,6 @@ public class DoctorSchedule : BaseEntity
     public DateOnly? ValidTo { get; set; }
 
     public Doctor Doctor { get; set; } = null!;
+
+    public PoliclinicRoom PoliclinicRoom { get; set; } = null!;
 }

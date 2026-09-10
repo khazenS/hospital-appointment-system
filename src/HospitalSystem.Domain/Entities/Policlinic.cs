@@ -22,4 +22,6 @@ public class Policlinic : BaseEntity
     public Hospital Hospital { get; set; } = null!;
 
     public List<PoliclinicRoom> Rooms { get; set; } = new List<PoliclinicRoom>();
+
+    public List<Doctor> Doctors { get; set; } = new List<Doctor>();
 }

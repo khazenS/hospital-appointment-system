@@ -12,7 +12,7 @@ public class PoliclinicRoom : BaseEntity
 
     public Policlinic Policlinic { get; set; } = null!;
 
-    public Doctor? Doctor { get; set; }
+    public List<DoctorSchedule> Schedules { get; set; } = new List<DoctorSchedule>();
 
     public List<AppointmentSlot> AppointmentSlots { get; set; } = new List<AppointmentSlot>();
 }

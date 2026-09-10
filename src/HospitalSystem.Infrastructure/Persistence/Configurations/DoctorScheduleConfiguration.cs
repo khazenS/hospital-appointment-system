@@ -25,7 +25,15 @@ public class DoctorScheduleConfiguration : IEntityTypeConfiguration<DoctorSchedu
             .HasForeignKey(schedule => schedule.DoctorId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        builder.HasOne(schedule => schedule.PoliclinicRoom)
+            .WithMany(room => room.Schedules)
+            .HasForeignKey(schedule => schedule.PoliclinicRoomId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasIndex(schedule => new { schedule.DoctorId, schedule.DayName })
             .HasDatabaseName("IX_DoctorSchedule_DoctorId_DayName");
+
+        builder.HasIndex(schedule => schedule.PoliclinicRoomId)
+            .HasDatabaseName("IX_DoctorSchedule_PoliclinicRoomId");
     }
 }

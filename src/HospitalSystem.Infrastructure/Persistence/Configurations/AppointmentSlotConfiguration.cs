@@ -32,6 +32,12 @@ public class AppointmentSlotConfiguration : IEntityTypeConfiguration<Appointment
             .IsUnique()
             .HasDatabaseName("UX_AppointmentSlot_Doctor_Date_Start");
 
+        // A room can host only one doctor at a time. The old Doctor-Room one-to-one
+        // constraint used to guarantee this implicitly; now the index has to.
+        builder.HasIndex(slot => new { slot.PoliclinicRoomId, slot.SlotDate, slot.StartTime })
+            .IsUnique()
+            .HasDatabaseName("UX_AppointmentSlot_Room_Date_Start");
+
         builder.HasIndex(slot => new { slot.SlotDate, slot.Status })
             .HasDatabaseName("IX_AppointmentSlot_SlotDate_Status");
     }
